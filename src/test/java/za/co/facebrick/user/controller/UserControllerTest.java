@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.CoreMatchers.is;
@@ -45,6 +45,8 @@ class UserControllerTest {
 
     UserDto userDto2;
 
+    UserDto invalidUser;
+
     @Autowired
     ObjectMapper objectMapper;
 
@@ -52,7 +54,7 @@ class UserControllerTest {
     public void setupEach() {
         userDto1 = new UserDto(1L, "Name1", "Lastname1", "email1@email.com");
         userDto2 = new UserDto(2L, "Name2", "Lastname2", "email2@email.com");
-
+        invalidUser = new UserDto(3L, "", "", "");
         userList = List.of(userDto1, userDto2);
     }
 
@@ -83,27 +85,142 @@ class UserControllerTest {
 
         ResultActions response = mockMvc.perform(get("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userList)));
+                .content(objectMapper.writeValueAsString("")));
 
         response.andExpect(MockMvcResultMatchers.status().isNoContent())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
 
 
-    @Test public void givenId_whenGetUserById_thenReturnUser() throws Exception {
+    @Test
+    public void givenIdExists_whenGetUserById_thenReturnUser() throws Exception {
+        Mockito.when(userService.getUser(1L)).thenReturn(Optional.ofNullable(userDto1));
 
+        ResultActions response = mockMvc.perform(get("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(""));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
+                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
     }
 
     @Test
-    void createUser() {
+    public void givenIdNotExists_whenGetUserById_thenReturnNoContent() throws Exception {
+        Mockito.when(userService.getUser(3L)).thenReturn(Optional.empty());
+
+        ResultActions response = mockMvc.perform(get("/users/3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(""));
+
+        response.andExpect(MockMvcResultMatchers.status().isNoContent())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+
+    @Test
+    void givenValidUser_whenCreateUser_thenReturnUserOk() throws Exception {
+        Mockito.when(userService.createUser(userDto1)).thenReturn(Optional.ofNullable(userDto1));
+
+        ResultActions response = mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userDto1)));
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
+                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
     }
 
     @Test
-    void updateUser() {
+    void givenInvalidUser_whenCreateUser_thenReturnBadRequest() throws Exception {
+        Mockito.when(userService.createUser(invalidUser)).thenThrow(IllegalArgumentException.class);
+
+        ResultActions response = mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidUser)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+
+    @Test
+    void givenNullUser_whenCreateUser_thenReturnBadRequest() throws Exception {
+        Mockito.when(userService.createUser(null)).thenThrow(IllegalArgumentException.class);
+
+        ResultActions response = mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(null)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+
+    @Test
+    void givenValidUser_whenUpdateUser_thenReturnUser() throws Exception {
+        Mockito.when(userService.updateUser(userDto1)).thenReturn(Optional.ofNullable(userDto1));
+
+        ResultActions response = mockMvc.perform(put("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userDto1)));
+
+        response.andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
+                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
     }
 
     @Test
-    void deleteUser() {
+    void givenInvalidUser_whenUpdateUser_thenReturnBadRequest() throws Exception {
+        Mockito.when(userService.updateUser(invalidUser)).thenThrow(IllegalArgumentException.class);
+
+        ResultActions response = mockMvc.perform(put("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidUser)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+
+    @Test
+    void givenNullUser_whenUpdateUser_thenReturnBadRequest() throws Exception {
+        Mockito.when(userService.updateUser(null)).thenThrow(IllegalArgumentException.class);
+
+        ResultActions response = mockMvc.perform(put("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(null)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    @Test
+    void givenValidId_whenDeleteUser_thenReturnUser() throws Exception {
+        Mockito.when(userService.deleteUser(1L)).thenReturn(Optional.ofNullable(userDto1));
+
+        ResultActions response = mockMvc.perform(delete("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(""));
+
+        response.andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
+                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
+    }
+
+    @Test
+    void givenInvalidId_whenDeleteUser_thenReturnNotFound() throws Exception {
+        Mockito.when(userService.deleteUser(1L)).thenReturn(Optional.empty());
+
+        ResultActions response = mockMvc.perform(delete("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(""));
+
+        response.andExpect(MockMvcResultMatchers.status().isNotFound());
     }
 
 }

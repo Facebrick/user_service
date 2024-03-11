@@ -33,6 +33,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<UserDto> updateUser(UserDto user) {
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<UserDto> deleteUser(Long id) {
         return Optional.empty();
     }
