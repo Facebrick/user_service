@@ -1,4 +1,4 @@
-package za.co.facebrick.user.service;
+package za.co.facebrick.user;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
