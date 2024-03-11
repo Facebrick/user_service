@@ -1,20 +1,19 @@
 package za.co.facebrick.user.service;
 
-import za.co.facebrick.user.controller.model.RestUser;
+import za.co.facebrick.user.controller.model.UserDto;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
 
-    Optional<List<RestUser>> getUsers();
+    Optional<List<UserDto>> getUsers();
 
-    Optional<RestUser> getUser(Long id);
+    Optional<UserDto> getUser(Long id);
 
-    Optional<RestUser> createUser(RestUser user);
+    Optional<UserDto> createUser(UserDto user);
 
-    Optional<RestUser> deleteUser(Long id);
+    Optional<UserDto> deleteUser(Long id);
 
 
 

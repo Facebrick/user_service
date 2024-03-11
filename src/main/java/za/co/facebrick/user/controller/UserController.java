@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import za.co.facebrick.user.controller.model.RestUser;
+import za.co.facebrick.user.controller.model.UserDto;
 import za.co.facebrick.user.service.UserService;
 
 import java.util.List;
@@ -24,29 +24,29 @@ public class UserController {
 
 
     @GetMapping("/users")
-    public List<RestUser> getUsers() {
+    public List<UserDto> getUsers() {
         return null;
     }
 
-    @GetMapping("/users")
-    public RestUser getUserById(@RequestParam long id) {
+    @GetMapping("/users/{id}")
+    public UserDto getUserById(@RequestParam long id) {
         return null;
     }
 
     @PostMapping("/users")
-    public ResponseEntity<RestUser> createUser(@RequestBody RestUser newUser) {
+    public ResponseEntity<UserDto> createUser(@RequestBody UserDto newUser) {
         return new ResponseEntity<>(newUser, HttpStatus.CREATED);
     }
 
-    @PutMapping("/users")
-    public ResponseEntity<RestUser> updateUser(@RequestParam long id) {
-        RestUser user = null;
+    @PutMapping("/users/{id}")
+    public ResponseEntity<UserDto> updateUser(@RequestParam long id) {
+        UserDto user = null;
         return ResponseEntity.ok(user);
     }
 
-    @DeleteMapping("/users")
-    public ResponseEntity<RestUser> deleteUser(@RequestParam long id) {
-        RestUser user = null;
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<UserDto> deleteUser(@RequestParam long id) {
+        UserDto user = null;
         return ResponseEntity.ok(user);
     }
 

@@ -2,7 +2,7 @@ package za.co.facebrick.user.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import za.co.facebrick.user.controller.model.RestUser;
+import za.co.facebrick.user.controller.model.UserDto;
 import za.co.facebrick.user.data.repository.UserRepository;
 
 import java.util.List;
@@ -18,22 +18,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<List<RestUser>> getUsers() {
+    public Optional<List<UserDto>> getUsers() {
         return Optional.empty();
     }
 
     @Override
-    public Optional<RestUser> getUser(Long id) {
+    public Optional<UserDto> getUser(Long id) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<RestUser> createUser(RestUser user) {
+    public Optional<UserDto> createUser(UserDto user) {
         return Optional.empty();
     }
 
     @Override
-    public Optional<RestUser> deleteUser(Long id) {
+    public Optional<UserDto> deleteUser(Long id) {
         return Optional.empty();
     }
 }

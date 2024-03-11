@@ -6,7 +6,7 @@ import lombok.*;
 @Setter
 @Getter
 @ToString
-public class RestUser {
+public class UserDto {
 
     private Long id;
 
