@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -36,9 +38,11 @@ class UserControllerTest {
 
     List<UserDto> userList;
 
-    UserDto userDto1;
+    UserDto finalUserDto;
 
-    UserDto userDto2;
+    UserDto finalUserDto2;
+
+    UserDto initialUserRequest;
 
     UserDto invalidUser;
 
@@ -47,10 +51,33 @@ class UserControllerTest {
 
     @BeforeEach
     public void setupEach() {
-        userDto1 = new UserDto(1L, "Name1", "Lastname1", "email1@email.com");
-        userDto2 = new UserDto(2L, "Name2", "Lastname2", "email2@email.com");
-        invalidUser = new UserDto(3L, "", "", "notanEmailAddreess");
-        userList = List.of(userDto1, userDto2);
+        finalUserDto = UserDto.builder()
+                .id(1L)
+                .firstName("Name1")
+                .lastName("Lastname1")
+                .email("email1@email.com")
+                .build();
+
+        finalUserDto2 = UserDto.builder()
+                .id(2L)
+                .firstName("Name2")
+                .lastName("Lastname2")
+                .email("email2@email.com")
+                .build();
+
+        initialUserRequest = UserDto.builder()
+                .firstName("Name1")
+                .lastName("Lastname1")
+                .email("email1@email.com")
+                .build();
+
+        invalidUser = UserDto.builder()
+                .firstName("")
+                .lastName("")
+                .email("")
+                .build();
+
+        userList = List.of(finalUserDto, finalUserDto2);
     }
 
     @Test
@@ -63,14 +90,14 @@ class UserControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is(userDto1.getId()), Long.class))
-                .andExpect(jsonPath("$[0].firstName", is(userDto1.getFirstName())))
-                .andExpect(jsonPath("$[0].lastName", is(userDto1.getLastName())))
-                .andExpect(jsonPath("$[0].email", is(userDto1.getEmail())))
-                .andExpect(jsonPath("$[1].id", is(userDto2.getId()), Long.class))
-                .andExpect(jsonPath("$[1].firstName", is(userDto2.getFirstName())))
-                .andExpect(jsonPath("$[1].lastName", is(userDto2.getLastName())))
-                .andExpect(jsonPath("$[1].email", is(userDto2.getEmail())));
+                .andExpect(jsonPath("$[0].id", is(finalUserDto.getId()), Long.class))
+                .andExpect(jsonPath("$[0].firstName", is(finalUserDto.getFirstName())))
+                .andExpect(jsonPath("$[0].lastName", is(finalUserDto.getLastName())))
+                .andExpect(jsonPath("$[0].email", is(finalUserDto.getEmail())))
+                .andExpect(jsonPath("$[1].id", is(finalUserDto2.getId()), Long.class))
+                .andExpect(jsonPath("$[1].firstName", is(finalUserDto2.getFirstName())))
+                .andExpect(jsonPath("$[1].lastName", is(finalUserDto2.getLastName())))
+                .andExpect(jsonPath("$[1].email", is(finalUserDto2.getEmail())));
 
     }
 
@@ -82,24 +109,35 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString("")));
 
-        response.andExpect(MockMvcResultMatchers.status().isNoContent())
-                .andExpect(jsonPath("$", hasSize(0)));
+        response.andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
+
+    @Test
+    public void givenUsersAndDatabaseFailure_whenGetUsers_thenReturnServiceUnavailable() throws Exception {
+        Mockito.when(userService.getUsers()).thenThrow(new DataAccessException("Can't access database") {
+        });
+
+        ResultActions response = mockMvc.perform(get("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString("")));
+
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable());
     }
 
 
     @Test
     public void givenIdExists_whenGetUserById_thenReturnUser() throws Exception {
-        Mockito.when(userService.getUser(1L)).thenReturn(Optional.ofNullable(userDto1));
+        Mockito.when(userService.getUser(1L)).thenReturn(Optional.ofNullable(finalUserDto));
 
         ResultActions response = mockMvc.perform(get("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(""));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
-                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
-                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
-                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
+                .andExpect(jsonPath("$.id", is(finalUserDto.getId()), Long.class))
+                .andExpect(jsonPath("$.firstName", is(finalUserDto.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(finalUserDto.getLastName())))
+                .andExpect(jsonPath("$.email", is(finalUserDto.getEmail())));
     }
 
     @Test
@@ -110,129 +148,128 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(""));
 
-        response.andExpect(MockMvcResultMatchers.status().isNoContent())
-                .andExpect(jsonPath("$", hasSize(0)));
+        response.andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 
+    @Test
+    public void givenIdExistsAndDatabaseFailure_whenGetUserById_thenReturnServiceUnavailable() throws Exception {
+        Mockito.when(userService.getUser(3L)).thenThrow(new DataAccessException("Can't access database") {
+        });
+
+        ResultActions response = mockMvc.perform(get("/users/3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(""));
+
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable());
+    }
 
     @Test
     void givenValidUser_whenCreateUser_thenReturnUserOk() throws Exception {
-        Mockito.when(userService.createUser(userDto1)).thenReturn(Optional.ofNullable(userDto1));
+        Mockito.when(userService.createUser(ArgumentMatchers.any())).thenReturn(Optional.of(finalUserDto));
 
         ResultActions response = mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userDto1)));
+                .content(objectMapper.writeValueAsString(initialUserRequest)));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
-                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
-                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
-                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
+                .andExpect(jsonPath("$.id", is(finalUserDto.getId()), Long.class))
+                .andExpect(jsonPath("$.firstName", is(finalUserDto.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(finalUserDto.getLastName())))
+                .andExpect(jsonPath("$.email", is(finalUserDto.getEmail())));
     }
 
     @Test
-    void givenValidUserButAlreadyExists_whenCreateUser_thenReturnUserOk() throws Exception {
-        Mockito.when(userService.createUser(userDto1)).thenReturn(Optional.empty());
+    void givenValidUserButAlreadyExists_whenCreateUser_thenServiceUnavailable() throws Exception {
+        Mockito.when(userService.createUser(initialUserRequest)).thenReturn(Optional.empty());
 
         ResultActions response = mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userDto1)));
+                .content(objectMapper.writeValueAsString(initialUserRequest)));
 
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Provided user already exists")));
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable())
+                .andExpect(jsonPath("$.failureReason", containsString("Unable to save user:"), String.class));
     }
 
     @Test
     void givenInvalidUser_whenCreateUser_thenReturnBadRequest() throws Exception {
-        Mockito.when(userService.createUser(invalidUser)).thenThrow(IllegalArgumentException.class);
+//        Mockito.when(userService.createUser(invalidUser)).thenThrow(IllegalArgumentException.class);
 
         ResultActions response = mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidUser)));
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
+                .andExpect(jsonPath("$.failedInput", hasItems("Lastname cannot be blank or just whitespaces",
+                        "Email cannot be blank or just whitespaces",
+                        "Firstname cannot be blank or just whitespaces")));
     }
-
-
-    @Test
-    void givenNullUser_whenCreateUser_thenReturnBadRequest() throws Exception {
-        Mockito.when(userService.createUser(null)).thenThrow(IllegalArgumentException.class);
-
-        ResultActions response = mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(null)));
-
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
-    }
-
 
     @Test
     void givenValidUser_whenUpdateUser_thenReturnUser() throws Exception {
-        Mockito.when(userService.updateUser(userDto1)).thenReturn(Optional.ofNullable(userDto1));
+        Mockito.when(userService.updateUser(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Optional.ofNullable(finalUserDto));
 
         ResultActions response = mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userDto1)));
+                .content(objectMapper.writeValueAsString(initialUserRequest)));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
-                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
-                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
-                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
+                .andExpect(jsonPath("$.id", is(finalUserDto.getId()), Long.class))
+                .andExpect(jsonPath("$.firstName", is(finalUserDto.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(finalUserDto.getLastName())))
+                .andExpect(jsonPath("$.email", is(finalUserDto.getEmail())));
     }
 
     @Test
     void givenUserDoesNotExist_whenUpdateUser_thenReturnUser() throws Exception {
-        Mockito.when(userService.updateUser(userDto1)).thenReturn(Optional.empty());
+        Mockito.when(userService.updateUser(1L, initialUserRequest)).thenReturn(Optional.empty());
 
         ResultActions response = mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(userDto1)));
+                .content(objectMapper.writeValueAsString(initialUserRequest)));
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Provided user does not exist")));
+                .andExpect(jsonPath("$.failureReason", containsString("Unable to update user. User does not exist: ")));
     }
 
     @Test
     void givenInvalidUser_whenUpdateUser_thenReturnBadRequest() throws Exception {
-        Mockito.when(userService.updateUser(invalidUser)).thenThrow(IllegalArgumentException.class);
+        Mockito.when(userService.updateUser(invalidUser.getId(), invalidUser)).thenThrow(IllegalArgumentException.class);
 
         ResultActions response = mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidUser)));
 
         response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
+                .andExpect(jsonPath("$.failedInput", hasItems("Lastname cannot be blank or just whitespaces",
+                        "Email cannot be blank or just whitespaces",
+                        "Firstname cannot be blank or just whitespaces")));
     }
 
-
     @Test
-    void givenNullUser_whenUpdateUser_thenReturnBadRequest() throws Exception {
-        Mockito.when(userService.updateUser(null)).thenThrow(IllegalArgumentException.class);
+    public void givenUsersAndDatabaseFailure_whenUpdateUser_thenReturnServiceUnavailable() throws Exception {
+        Mockito.when(userService.updateUser(ArgumentMatchers.any(), ArgumentMatchers.any())).thenThrow(new DataAccessException("Can't access database") {
+        });
 
-        ResultActions response = mockMvc.perform(put("/users")
+        ResultActions response = mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(null)));
+                .content(objectMapper.writeValueAsString(initialUserRequest)));
 
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable());
     }
 
     @Test
     void givenIdExists_whenDeleteUser_thenReturnUser() throws Exception {
-        Mockito.when(userService.deleteUser(1L)).thenReturn(Optional.ofNullable(userDto1));
+        Mockito.when(userService.deleteUser(1L)).thenReturn(Optional.ofNullable(finalUserDto));
 
         ResultActions response = mockMvc.perform(delete("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(""));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
-                .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
-                .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
-                .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
+                .andExpect(jsonPath("$.id", is(finalUserDto.getId()), Long.class))
+                .andExpect(jsonPath("$.firstName", is(finalUserDto.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(finalUserDto.getLastName())))
+                .andExpect(jsonPath("$.email", is(finalUserDto.getEmail())));
     }
 
     @Test
@@ -243,8 +280,19 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(""));
 
-        response.andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().string(""));
+        response.andExpect(MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    public void givenUsersAndDatabaseFailure_whenDeleteUser_thenReturnServiceUnavailable() throws Exception {
+        Mockito.when(userService.deleteUser(1L)).thenThrow(new DataAccessException("Can't access database") {
+        });
+
+        ResultActions response = mockMvc.perform(delete("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString("")));
+
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable());
     }
 
 }

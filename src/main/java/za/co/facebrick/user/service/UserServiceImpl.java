@@ -66,11 +66,11 @@ public class UserServiceImpl implements UserService {
     public Optional<UserDto> createUser(@Valid UserDto user) throws DataAccessException, IllegalArgumentException {
         LOG.debug("createUser({})", user);
         validateUser(user);
-        if (userRepository.findById(user.getId()).isPresent()) {
-            return Optional.empty();
-        } else {
-            userRepository.save(convertUserDto(user));
+        User savedUser = userRepository.save(convertUserDto(user));
+        if (savedUser.getId() != null) {
             return Optional.of(user);
+        } else {
+            return Optional.empty();
         }
     }
 
@@ -87,10 +87,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<UserDto> updateUser(@Valid UserDto user) throws DataAccessException, IllegalArgumentException {
+    public Optional<UserDto> updateUser(Long id, @Valid UserDto user) throws DataAccessException, IllegalArgumentException {
         LOG.debug("updateUser({})", user);
         validateUser(user);
-        if (userRepository.findById(user.getId()).isPresent()) {
+        if (userRepository.findById(id).isPresent()) {
             userRepository.save(convertUserDto(user));
             return Optional.of(user);
         } else {
@@ -121,7 +121,6 @@ public class UserServiceImpl implements UserService {
 
     protected User convertUserDto(UserDto user) {
         return User.builder()
-                .id(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())

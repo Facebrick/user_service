@@ -3,6 +3,8 @@ package za.co.facebrick.user.service;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,11 +32,17 @@ class UserServiceImplTest {
 
     UserDto userDto2;
 
+    UserDto createUser;
+
     UserDto invalidUser;
 
     User user1;
 
     User user2;
+
+    User newUser;
+
+    User createdUser;
 
     List<User> dataUserList;
 
@@ -52,6 +60,13 @@ class UserServiceImplTest {
                 .firstName("Name2")
                 .lastName("Lastname2")
                 .email("email2@email.com")
+                .build();
+
+        createUser = UserDto.builder()
+                .id(4L)
+                .firstName("Name1")
+                .lastName("Lastname1")
+                .email("email1@email.com")
                 .build();
 
         invalidUser = UserDto.builder()
@@ -74,6 +89,13 @@ class UserServiceImplTest {
                 .firstName("Name2")
                 .lastName("Lastname2")
                 .email("email2@email.com")
+                .build();
+
+        createdUser = User.builder()
+                .id(4L)
+                .firstName("Name1")
+                .lastName("Lastname1")
+                .email("email1@email.com")
                 .build();
 
         dataUserList = List.of(user1, user2);
@@ -136,7 +158,7 @@ class UserServiceImplTest {
     void givenUserExists_whenUpdateUser_thenUpdateAndReturnUser() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user1));
 
-        Optional<UserDto> response = userService.updateUser(userDto1);
+        Optional<UserDto> response = userService.updateUser(userDto1.getId(), userDto1);
 
         Assertions.assertThat(response.isPresent()).isTrue();
         Assertions.assertThat(response.get().getId()).isEqualTo(userDto1.getId());
@@ -149,7 +171,7 @@ class UserServiceImplTest {
     void givenUserDoesNotExist_whenUpdateUser_thenReturnEmptyUser() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Optional<UserDto> response = userService.updateUser(userDto1);
+        Optional<UserDto> response = userService.updateUser(userDto1.getId(), userDto1);
 
         Assertions.assertThat(response.isPresent()).isFalse();
     }
@@ -158,30 +180,21 @@ class UserServiceImplTest {
     void givenInvalidUser_whenUpdateUser_thenThrowException() {
 
         Assertions.assertThatThrownBy(() -> {
-            Optional<UserDto> response = userService.updateUser(invalidUser);
+            Optional<UserDto> response = userService.updateUser(invalidUser.getId(), invalidUser);
         }).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void givenValidUserDoesNotExists_whenCreateUser_thenUpdateAndReturnUser() {
-        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.empty());
+        Mockito.when(userRepository.save(ArgumentMatchers.any())).thenReturn(createdUser);
 
-        Optional<UserDto> response = userService.createUser(userDto1);
+        Optional<UserDto> response = userService.createUser(createUser);
 
         Assertions.assertThat(response.isPresent()).isTrue();
-        Assertions.assertThat(response.get().getId()).isEqualTo(userDto1.getId());
-        Assertions.assertThat(response.get().getFirstName()).isEqualTo(userDto1.getFirstName());
-        Assertions.assertThat(response.get().getLastName()).isEqualTo(userDto1.getLastName());
-        Assertions.assertThat(response.get().getEmail()).isEqualTo(userDto1.getEmail());
-    }
-
-    @Test
-    void givenUserExist_whenCreateUser_thenReturnEmptyUser() {
-        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user1));
-
-        Optional<UserDto> response = userService.createUser(userDto1);
-
-        Assertions.assertThat(response.isPresent()).isFalse();
+        Assertions.assertThat(response.get().getId()).isEqualTo(createdUser.getId());
+        Assertions.assertThat(response.get().getFirstName()).isEqualTo(createdUser.getFirstName());
+        Assertions.assertThat(response.get().getLastName()).isEqualTo(createdUser.getLastName());
+        Assertions.assertThat(response.get().getEmail()).isEqualTo(createdUser.getEmail());
     }
 
     @Test

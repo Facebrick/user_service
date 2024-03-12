@@ -16,7 +16,7 @@ public interface UserService {
 
     Optional<UserDto> createUser(UserDto user) throws DataAccessException, IllegalArgumentException;
 
-    Optional<UserDto> updateUser(UserDto user) throws DataAccessException, IllegalArgumentException;
+    Optional<UserDto> updateUser(Long id, UserDto user) throws DataAccessException, IllegalArgumentException;
 
     Optional<UserDto> deleteUser(Long id) throws DataAccessException;
 
