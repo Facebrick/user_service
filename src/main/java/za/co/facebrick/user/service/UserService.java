@@ -20,6 +20,4 @@ public interface UserService {
 
     Optional<UserDto> deleteUser(Long id) throws DataAccessException;
 
-
-
 }

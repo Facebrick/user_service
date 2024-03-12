@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
             } else {
                 return Optional.empty();
             }
-        } catch(DataAccessException e) {
+        } catch (DataAccessException e) {
             LOG.error("An exception has occured", e);
             throw e;
         }
