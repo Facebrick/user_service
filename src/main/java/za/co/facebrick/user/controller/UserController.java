@@ -39,13 +39,13 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<UserDto> updateUser(@RequestParam long id) {
+    public ResponseEntity<UserDto> updateUser(@RequestParam Long id) {
         UserDto user = null;
         return ResponseEntity.ok(user);
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<UserDto> deleteUser(@RequestParam long id) {
+    public ResponseEntity<UserDto> deleteUser(@RequestParam Long id) {
         UserDto user = null;
         return ResponseEntity.ok(user);
     }

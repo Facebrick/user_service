@@ -3,6 +3,7 @@ package za.co.facebrick.user.controller.model;
 import lombok.*;
 
 @AllArgsConstructor
+@Builder
 @Setter
 @Getter
 @ToString

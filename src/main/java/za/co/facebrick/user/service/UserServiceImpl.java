@@ -28,12 +28,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<UserDto> createUser(UserDto user) {
+    public Optional<UserDto> createUser(UserDto user) throws IllegalArgumentException {
         return Optional.empty();
     }
 
     @Override
-    public Optional<UserDto> updateUser(UserDto user) {
+    public Optional<UserDto> updateUser(UserDto user) throws IllegalArgumentException {
         return Optional.empty();
     }
 

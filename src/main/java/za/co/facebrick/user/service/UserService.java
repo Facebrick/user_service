@@ -12,9 +12,9 @@ public interface UserService {
 
     Optional<UserDto> getUser(Long id);
 
-    Optional<UserDto> createUser(UserDto user);
+    Optional<UserDto> createUser(UserDto user) throws IllegalArgumentException;
 
-    Optional<UserDto> updateUser(UserDto user);
+    Optional<UserDto> updateUser(UserDto user) throws IllegalArgumentException;
 
     Optional<UserDto> deleteUser(Long id);
 

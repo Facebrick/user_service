@@ -1,8 +1,6 @@
 package za.co.facebrick.user.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -11,23 +9,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.event.annotation.BeforeTestClass;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import za.co.facebrick.user.controller.model.UserDto;
-import za.co.facebrick.user.data.model.User;
 import za.co.facebrick.user.service.UserService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(controllers = UserController.class)
 @ExtendWith({MockitoExtension.class})
@@ -50,7 +45,7 @@ class UserControllerTest {
     @Autowired
     ObjectMapper objectMapper;
 
-    @BeforeEach
+    @BeforeTestClass
     public void setupEach() {
         userDto1 = new UserDto(1L, "Name1", "Lastname1", "email1@email.com");
         userDto2 = new UserDto(2L, "Name2", "Lastname2", "email2@email.com");
@@ -136,6 +131,18 @@ class UserControllerTest {
     }
 
     @Test
+    void givenValidUserButAlreadyExists_whenCreateUser_thenReturnUserOk() throws Exception {
+        Mockito.when(userService.createUser(userDto1)).thenReturn(Optional.ofNullable(userDto1));
+
+        ResultActions response = mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userDto1)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Provided user already exists")));
+    }
+
+    @Test
     void givenInvalidUser_whenCreateUser_thenReturnBadRequest() throws Exception {
         Mockito.when(userService.createUser(invalidUser)).thenThrow(IllegalArgumentException.class);
 
@@ -143,7 +150,8 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidUser)));
 
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
     }
 
 
@@ -155,7 +163,8 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(null)));
 
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
     }
 
 
@@ -175,6 +184,18 @@ class UserControllerTest {
     }
 
     @Test
+    void givenUserDoesNotExist_whenUpdateUser_thenReturnUser() throws Exception {
+        Mockito.when(userService.updateUser(userDto1)).thenReturn(Optional.empty());
+
+        ResultActions response = mockMvc.perform(put("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userDto1)));
+
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Provided user does not exist")));
+    }
+
+    @Test
     void givenInvalidUser_whenUpdateUser_thenReturnBadRequest() throws Exception {
         Mockito.when(userService.updateUser(invalidUser)).thenThrow(IllegalArgumentException.class);
 
@@ -182,7 +203,8 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidUser)));
 
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
     }
 
 
@@ -194,11 +216,12 @@ class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(null)));
 
-        response.andExpect(MockMvcResultMatchers.status().isBadRequest());
+        response.andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("Provided user is invalid")));
     }
 
     @Test
-    void givenValidId_whenDeleteUser_thenReturnUser() throws Exception {
+    void givenIdExists_whenDeleteUser_thenReturnUser() throws Exception {
         Mockito.when(userService.deleteUser(1L)).thenReturn(Optional.ofNullable(userDto1));
 
         ResultActions response = mockMvc.perform(delete("/users/1")
@@ -213,14 +236,15 @@ class UserControllerTest {
     }
 
     @Test
-    void givenInvalidId_whenDeleteUser_thenReturnNotFound() throws Exception {
+    void givenIdDoesNotExist_whenDeleteUser_thenReturnNotFound() throws Exception {
         Mockito.when(userService.deleteUser(1L)).thenReturn(Optional.empty());
 
         ResultActions response = mockMvc.perform(delete("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(""));
 
-        response.andExpect(MockMvcResultMatchers.status().isNotFound());
+        response.andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(MockMvcResultMatchers.content().string(""));
     }
 
 }
