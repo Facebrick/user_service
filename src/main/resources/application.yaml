@@ -1,3 +1,8 @@
 spring:
   application:
     name: user_service
+  datasource:
+    url: jdbc:mysql://193.170.0.1:3315/userdb?useSSL=true&createDatabaseIfNotExist=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: password1234!

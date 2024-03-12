@@ -1,6 +1,7 @@
 package za.co.facebrick.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -9,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.event.annotation.BeforeTestClass;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -45,11 +45,11 @@ class UserControllerTest {
     @Autowired
     ObjectMapper objectMapper;
 
-    @BeforeTestClass
+    @BeforeEach
     public void setupEach() {
         userDto1 = new UserDto(1L, "Name1", "Lastname1", "email1@email.com");
         userDto2 = new UserDto(2L, "Name2", "Lastname2", "email2@email.com");
-        invalidUser = new UserDto(3L, "", "", "");
+        invalidUser = new UserDto(3L, "", "", "notanEmailAddreess");
         userList = List.of(userDto1, userDto2);
     }
 
@@ -63,11 +63,11 @@ class UserControllerTest {
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id", is(userDto1.getId())))
+                .andExpect(jsonPath("$[0].id", is(userDto1.getId()), Long.class))
                 .andExpect(jsonPath("$[0].firstName", is(userDto1.getFirstName())))
                 .andExpect(jsonPath("$[0].lastName", is(userDto1.getLastName())))
                 .andExpect(jsonPath("$[0].email", is(userDto1.getEmail())))
-                .andExpect(jsonPath("$[1].id", is(userDto2.getId())))
+                .andExpect(jsonPath("$[1].id", is(userDto2.getId()), Long.class))
                 .andExpect(jsonPath("$[1].firstName", is(userDto2.getFirstName())))
                 .andExpect(jsonPath("$[1].lastName", is(userDto2.getLastName())))
                 .andExpect(jsonPath("$[1].email", is(userDto2.getEmail())));
@@ -96,7 +96,7 @@ class UserControllerTest {
                 .content(""));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
                 .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
                 .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
@@ -124,7 +124,7 @@ class UserControllerTest {
                 .content(objectMapper.writeValueAsString(userDto1)));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
                 .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
                 .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
@@ -132,7 +132,7 @@ class UserControllerTest {
 
     @Test
     void givenValidUserButAlreadyExists_whenCreateUser_thenReturnUserOk() throws Exception {
-        Mockito.when(userService.createUser(userDto1)).thenReturn(Optional.ofNullable(userDto1));
+        Mockito.when(userService.createUser(userDto1)).thenReturn(Optional.empty());
 
         ResultActions response = mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -172,12 +172,12 @@ class UserControllerTest {
     void givenValidUser_whenUpdateUser_thenReturnUser() throws Exception {
         Mockito.when(userService.updateUser(userDto1)).thenReturn(Optional.ofNullable(userDto1));
 
-        ResultActions response = mockMvc.perform(put("/users")
+        ResultActions response = mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(userDto1)));
 
         response.andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
                 .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
                 .andExpect(jsonPath("$.email", is(userDto1.getEmail())));
@@ -187,7 +187,7 @@ class UserControllerTest {
     void givenUserDoesNotExist_whenUpdateUser_thenReturnUser() throws Exception {
         Mockito.when(userService.updateUser(userDto1)).thenReturn(Optional.empty());
 
-        ResultActions response = mockMvc.perform(put("/users")
+        ResultActions response = mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(userDto1)));
 
@@ -199,7 +199,7 @@ class UserControllerTest {
     void givenInvalidUser_whenUpdateUser_thenReturnBadRequest() throws Exception {
         Mockito.when(userService.updateUser(invalidUser)).thenThrow(IllegalArgumentException.class);
 
-        ResultActions response = mockMvc.perform(put("/users")
+        ResultActions response = mockMvc.perform(put("/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidUser)));
 
@@ -229,7 +229,7 @@ class UserControllerTest {
                 .content(""));
 
         response.andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.id", is(userDto1.getId())))
+                .andExpect(jsonPath("$.id", is(userDto1.getId()), Long.class))
                 .andExpect(jsonPath("$.firstName", is(userDto1.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(userDto1.getLastName())))
                 .andExpect(jsonPath("$.email", is(userDto1.getEmail())));

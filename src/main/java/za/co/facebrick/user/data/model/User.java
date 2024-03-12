@@ -1,7 +1,6 @@
 package za.co.facebrick.user.data.model;
 
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

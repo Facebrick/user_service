@@ -1,41 +1,27 @@
 package za.co.facebrick.user.service;
 
 import org.assertj.core.api.Assertions;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.event.annotation.BeforeTestClass;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
 import za.co.facebrick.user.controller.model.UserDto;
 import za.co.facebrick.user.data.model.User;
 import za.co.facebrick.user.data.repository.UserRepository;
 
-import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-
-@ExtendWith({MockitoExtension.class})
+@SpringBootTest
 class UserServiceImplTest {
 
     @MockBean
     UserRepository userRepository;
 
-    @InjectMocks
+    @Autowired
     private UserService userService;
 
     List<UserDto> userList;
@@ -52,7 +38,7 @@ class UserServiceImplTest {
 
     List<User> dataUserList;
 
-    @BeforeTestClass
+    @BeforeEach
     public void setupEach() {
         userDto1 = UserDto.builder()
                 .id(1L)
@@ -149,7 +135,6 @@ class UserServiceImplTest {
     @Test
     void givenUserExists_whenUpdateUser_thenUpdateAndReturnUser() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user1));
-        Mockito.when(userRepository.save(user1)).thenReturn(user1);
 
         Optional<UserDto> response = userService.updateUser(userDto1);
 
@@ -162,8 +147,7 @@ class UserServiceImplTest {
 
     @Test
     void givenUserDoesNotExist_whenUpdateUser_thenReturnEmptyUser() {
-        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user1));
-        Mockito.when(userRepository.save(user1)).thenReturn(user1);
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         Optional<UserDto> response = userService.updateUser(userDto1);
 
@@ -181,7 +165,6 @@ class UserServiceImplTest {
     @Test
     void givenValidUserDoesNotExists_whenCreateUser_thenUpdateAndReturnUser() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.empty());
-        Mockito.when(userRepository.save(user1)).thenReturn(user1);
 
         Optional<UserDto> response = userService.createUser(userDto1);
 
@@ -195,7 +178,6 @@ class UserServiceImplTest {
     @Test
     void givenUserExist_whenCreateUser_thenReturnEmptyUser() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user1));
-        Mockito.when(userRepository.save(user1)).thenReturn(user1);
 
         Optional<UserDto> response = userService.createUser(userDto1);
 
