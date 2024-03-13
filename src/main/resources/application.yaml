@@ -2,7 +2,14 @@ spring:
   application:
     name: user_service
   datasource:
-    url: jdbc:mysql://193.170.0.1:3315/userdb?useSSL=true&createDatabaseIfNotExist=true
+    url: jdbc:mysql://193.170.0.1:3316/userdb?useSSL=true&createDatabaseIfNotExist=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: password1234!
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+
+server:
+  port: 8081

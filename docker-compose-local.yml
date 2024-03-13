@@ -1,0 +1,29 @@
+version: '3.5'
+services:
+  user_service:
+    container_name: user-service
+    image: user-service-tomcat:1_0_0
+    ports:
+      - 8081:8080
+    networks:
+      - local_network
+  percona:
+    container_name: percona-instance
+    restart: unless-stopped
+    image: percona:8.0.33-25
+#    volumes:
+#      - temp-vol:/var/lib/mysql
+    ports:
+      - 3316:3306
+    networks:
+      - local_network
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+networks:
+  local_network:
+    name: local_network
+    ipam:
+      config:
+        - subnet: 193.170.0.128/25
+#volumes:
+#  temp-vol:

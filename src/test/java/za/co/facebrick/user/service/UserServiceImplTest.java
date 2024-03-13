@@ -63,7 +63,6 @@ class UserServiceImplTest {
                 .build();
 
         createUser = UserDto.builder()
-                .id(4L)
                 .firstName("Name1")
                 .lastName("Lastname1")
                 .email("email1@email.com")
@@ -92,7 +91,7 @@ class UserServiceImplTest {
                 .build();
 
         createdUser = User.builder()
-                .id(4L)
+                .id(1L)
                 .firstName("Name1")
                 .lastName("Lastname1")
                 .email("email1@email.com")
@@ -158,7 +157,7 @@ class UserServiceImplTest {
     void givenUserExists_whenUpdateUser_thenUpdateAndReturnUser() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user1));
 
-        Optional<UserDto> response = userService.updateUser(userDto1.getId(), userDto1);
+        Optional<UserDto> response = userService.updateUser(userDto1.getId(), createUser);
 
         Assertions.assertThat(response.isPresent()).isTrue();
         Assertions.assertThat(response.get().getId()).isEqualTo(userDto1.getId());
@@ -171,7 +170,7 @@ class UserServiceImplTest {
     void givenUserDoesNotExist_whenUpdateUser_thenReturnEmptyUser() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Optional<UserDto> response = userService.updateUser(userDto1.getId(), userDto1);
+        Optional<UserDto> response = userService.updateUser(userDto1.getId(), createUser);
 
         Assertions.assertThat(response.isPresent()).isFalse();
     }
