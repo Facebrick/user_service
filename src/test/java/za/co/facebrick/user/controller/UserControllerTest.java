@@ -179,6 +179,18 @@ class UserControllerTest {
     }
 
     @Test
+    public void givenUsersAndDatabaseFailure_whenCreateUser_thenReturnServiceUnavailable() throws Exception {
+        Mockito.when(userService.createUser(ArgumentMatchers.any())).thenThrow(new DataAccessException("Can't access database") {
+        });
+
+        ResultActions response = mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(initialUserRequest)));
+
+        response.andExpect(MockMvcResultMatchers.status().isServiceUnavailable());
+    }
+
+    @Test
     void givenValidUserButAlreadyExists_whenCreateUser_thenServiceUnavailable() throws Exception {
         Mockito.when(userService.createUser(initialUserRequest)).thenReturn(Optional.empty());
 

@@ -28,5 +28,13 @@ echo -e "\nGet User that doesn't exist: $(curl  --silent --show-error --write-ou
 
 echo -e "\nUpdate a user that doesn't exist: $(curl  --silent --show-error --write-out '\nhttp_response_code: %{http_code}' -H "Content-Type: application/json" -X PUT http://localhost:$app_port/users/1234 -d '{"firstName":"Test2Update", "lastName":"Test2LastUpdate", "email":"email2Update@email.com"}') "
 
+echo -e "\nUpdate a user with invalid data: $(curl  --silent --show-error --write-out '\nhttp_response_code: %{http_code}' -H "Content-Type: application/json" -X PUT http://localhost:$app_port/users/1234 -d '{"firstName":"", "lastName":"", "email":""}') "
+
+echo -e "\nAdd a user with no first name: $(curl  --silent --show-error --write-out '\nhttp_response_code: %{http_code}' -H "Content-Type: application/json" -X POST http://localhost:$app_port/users -d '{"firstName":"", "lastName":"Test1Last", "email":"email1@email.com"}') "
+
+echo -e "\nAdd a user with no last name: $(curl  --silent --show-error --write-out '\nhttp_response_code: %{http_code}' -H "Content-Type: application/json" -X POST http://localhost:$app_port/users -d '{"firstName":"John", "lastName":"", "email":"email1@email.com"}') "
+
+echo -e "\nAdd a user with invalid email: $(curl  --silent --show-error --write-out '\nhttp_response_code: %{http_code}' -H "Content-Type: application/json" -X POST http://localhost:$app_port/users -d '{"firstName":"John", "lastName":"Test2Update", "email":"email1"}') "
+
 echo -e "\nDelete a user that doesn't exist: $(curl  --silent --show-error --write-out '\nhttp_response_code: %{http_code}' -H "Content-Type: application/json" -X DELETE http://localhost:$app_port/users/1234) "
 #curl -H "Content-Type: application/json" -X POST http://localhost:3000/data -d '{"key1":"value1", "key2":"value2"}'

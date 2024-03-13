@@ -21,11 +21,13 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger LOG = LogManager.getLogger();
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    private Validator validator;
+    private final Validator validator;
 
-    public UserServiceImpl(@Autowired UserRepository userRepository, @Autowired Validator validator) {
+    @Autowired
+    public UserServiceImpl(UserRepository userRepository,
+                           Validator validator) {
         this.userRepository = userRepository;
         this.validator = validator;
     }
@@ -38,24 +40,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<List<UserDto>> getUsers() throws DataAccessException {
         LOG.debug("getUsers()");
-        try {
-            List<User> users = userRepository.findAll();
-            LOG.debug("Returned users: {}", users.toString());
+        List<User> users = userRepository.findAll();
+        LOG.debug("Returned users: {}", users.toString());
 
-            if (!users.isEmpty()) {
-                List<UserDto> userDtos = new ArrayList<>();
-                for (User user : users) {
-                    userDtos.add(convertUser(user));
-                }
-                LOG.debug("Returning {} users to controller", userDtos.size());
-                return Optional.of(userDtos);
-            } else {
-                return Optional.empty();
+        if (!users.isEmpty()) {
+            List<UserDto> userDtos = new ArrayList<>();
+            for (User user : users) {
+                userDtos.add(convertUser(user));
             }
-        } catch (DataAccessException e) {
-            LOG.error("An exception has occured", e);
-            throw e;
+            LOG.debug("Returning {} users to controller", userDtos.size());
+            return Optional.of(userDtos);
+        } else {
+            return Optional.empty();
         }
+
     }
 
     /**

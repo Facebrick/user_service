@@ -22,9 +22,10 @@ public class UserController {
 
     private static final Logger LOG = LogManager.getLogger();
 
-    private UserService userService;
+    private final UserService userService;
 
-    public UserController(@Autowired UserService userService) {
+    @Autowired
+    public UserController(UserService userService) {
         this.userService = userService;
     }
 
